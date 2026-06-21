@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // for email auth
+  accounts      Account[]
+  sessions      Session[]
+  interviews    Interview[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Interview {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "coding", "voice", "system_design"
+  status      String   @default("in_progress") // "in_progress", "completed", "abandoned"
+  score       Int?
+  feedback    String?
+  duration    Int?     // in seconds
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  scores      Score[]
+
+  @@index([userId])
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  interviewId String
+  title       String
+  description String
+  difficulty  String   // "easy", "medium", "hard"
+  category    String   // "arrays", "trees", "dp", etc.
+  code        String?  // user's submitted code
+  language    String?  // "javascript", "python", etc.
+  passed      Boolean?
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  scores      Score[]
+
+  @@index([interviewId])
+}
+
+model Score {
+  id             String   @id @default(cuid())
+  interviewId    String
+  questionId     String?
+  category       String   // "time_complexity", "code_quality", "communication", etc.
+  score          Int      // 0-100
+  feedback       String?
+  interview      Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  question       Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  @@index([interviewId])
+}
