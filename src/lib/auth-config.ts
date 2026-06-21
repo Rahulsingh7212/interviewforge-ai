@@ -1,10 +1,10 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
-export const authConfig: NextAuthConfig = {
+export const authConfig: NextAuthOptions = {
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -37,9 +37,8 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   pages: {
-    signIn: "/login",
-    signUp: "/register",
-  },
+  signIn: "/login",
+},
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
